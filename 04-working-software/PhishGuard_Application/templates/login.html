@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}PhishGuard Sign In{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>PhishGuard sign in</h1>
+  <p>Use your assigned account. Access is limited by role to support least privilege. Three consecutive failed sign-in attempts trigger a five-minute account lockout.</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="username">Username</label>
+    <input id="username" name="username" type="text" autocomplete="username" required autofocus placeholder="admin">
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <button type="submit">Sign in</button>
+  </form>
+  <p class="help"><a href="{{ url_for('landing') }}">← Return to PhishGuard awareness home</a></p>
+</section>
+{% endblock %}

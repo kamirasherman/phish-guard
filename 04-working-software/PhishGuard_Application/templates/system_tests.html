@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Run System Tests{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Automated system tests</h1>
+    <p>Administrator-only launcher for the same packaged test suite used by <code>Run_Tests.bat</code>.</p>
+  </div>
+  <a href="{{ url_for('dashboard') }}">Back to campaigns</a>
+</div>
+
+<section class="card">
+  <div class="status-heading">
+    <div>
+      <h2>Test status</h2>
+      <p class="help">Tests use isolated temporary database, media, outbox, settings, and audit paths. Live SMTP is forced off.</p>
+    </div>
+    <span class="status-pill test-status-{{ test_state.status }}">{{ test_state.status|upper }}</span>
+  </div>
+
+  <dl class="test-summary">
+    <div><dt>Started</dt><dd>{{ test_state.started_at or 'Not run in this application session' }}</dd></div>
+    <div><dt>Finished</dt><dd>{{ test_state.finished_at or '—' }}</dd></div>
+    <div><dt>Exit code</dt><dd>{{ test_state.exit_code if test_state.exit_code is not none else '—' }}</dd></div>
+    <div><dt>Maximum duration</dt><dd>{{ timeout_minutes }} minutes</dd></div>
+  </dl>
+
+  <div class="button-row">
+    <form method="post" action="{{ url_for('start_system_tests') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" {% if test_state.status == 'running' %}disabled{% endif %}>{{ 'Tests running…' if test_state.status == 'running' else 'Start automated tests' }}</button>
+    </form>
+    <a class="button secondary-button" href="{{ url_for('system_tests') }}">Refresh status</a>
+  </div>
+
+  {% if test_state.status == 'running' %}
+    <p class="notice">The suite is running in the background. Refresh this page in a few seconds. Do not close the Quick Start command window.</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Latest output</h2>
+  {% if test_state.output %}
+    <pre class="test-output">{{ test_state.output }}</pre>
+  {% else %}
+    <p>No in-app test output is available yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

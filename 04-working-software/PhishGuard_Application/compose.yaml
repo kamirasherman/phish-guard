@@ -1,0 +1,50 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      DATABASE: /app/instance/trainer.sqlite
+      OUTBOX_DIR: /app/instance/outbox
+      MEDIA_DIR: /app/instance/campaign_media
+      DOMAIN_ALLOWLIST_FILE: /app/instance/allowed_domains.txt
+      AUDIT_LOG_FILE: /app/instance/audit.log
+      SMTP_SETTINGS_FILE: /app/instance/smtp_settings.json
+      PRODUCTION_MODE: "true"
+      COOKIE_SECURE: "true"
+      TRUST_PROXY: "true"
+      BACKGROUND_DISPATCH_ENABLED: "true"
+      SYNCHRONOUS_DISPATCH: "false"
+    volumes:
+      - phishguard_data:/app/instance
+      - ./backups:/backups
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    env_file:
+      - .env.production
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  phishguard_data:
+  caddy_data:
+  caddy_config:

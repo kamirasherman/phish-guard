@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}New Campaign{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Create training campaign</h1>
+    <p>Generate a bounded training draft, review the message, and optionally add educational media for the click-response page.</p>
+  </div>
+  <a href="{{ url_for('dashboard') }}">Back to campaigns</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="stacked-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <section class="card">
+    <h2>1. Generate a safe draft</h2>
+    <p class="help">The generator uses approved workplace-training scenarios. It does not add external links, attachments, credential requests, or arbitrary sender identities.</p>
+    <div class="grid two">
+      <div>
+        <label for="scenario">Training scenario</label>
+        <select id="scenario" name="scenario">
+          {% for key, label in scenarios.items() %}
+            <option value="{{ key }}" {% if values.scenario == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="difficulty">Difficulty</label>
+        <select id="difficulty" name="difficulty">
+          <option value="basic" {% if values.difficulty == 'basic' %}selected{% endif %}>Basic — clearer warning signs</option>
+          <option value="intermediate" {% if values.difficulty == 'intermediate' %}selected{% endif %}>Intermediate — balanced cues</option>
+          <option value="advanced" {% if values.difficulty == 'advanced' %}selected{% endif %}>Advanced — fewer obvious cues</option>
+        </select>
+      </div>
+    </div>
+    <button type="submit" name="action" value="generate" class="secondary-button" formnovalidate>Generate training draft</button>
+  </section>
+
+  <section class="card">
+    <h2>2. Compose the training email</h2>
+    <p>Enter the approved recipients while you create the message. The application adds its own training link and authorized-exercise footer.</p>
+
+    <div class="simulation-identity-panel">
+      <h3>Sender identity for this simulation</h3>
+      <div class="grid two">
+        <div>
+          <label for="live_sender_email">Live sender email</label>
+          <input id="live_sender_email" name="live_sender_email" type="email" maxlength="254" required value="{{ values.live_sender_email }}" placeholder="{{ approved_sender }}">
+          <p class="help">This must match the approved SMTP From address and remains the authenticated address used for delivery.</p>
+        </div>
+        <div>
+          <label for="simulation_alias">Randomized simulation alias</label>
+          <input id="simulation_alias" name="simulation_alias" type="email" maxlength="254" required readonly value="{{ values.simulation_alias }}">
+          <p class="help">Generated under the default training domain <strong>{{ training_domain }}</strong>. It is used as the visible simulation identity, not as a forged SMTP sender.</p>
+        </div>
+      </div>
+      <button type="submit" name="action" value="regenerate_alias" class="secondary-button" formnovalidate>Generate another alias</button>
+      {% if has_permission('manage_settings') %}<p class="help"><a href="{{ url_for('smtp_settings') }}">Change the default training domain in SMTP Settings</a>.</p>{% endif %}
+    </div>
+
+    <label for="recipient_entries"><strong>To: recipient email addresses</strong></label>
+    <textarea id="recipient_entries" name="recipient_entries" rows="6" autocomplete="off" placeholder="alex@example.org; jordan@example.org&#10;Taylor Morgan &lt;taylor@example.org&gt;">{{ values.recipient_entries }}</textarea>
+    <p class="help">Use one address per line or separate addresses with semicolons. You may also use <code>alex@example.org,Alex</code> for first-name personalization. Domain mode: <strong>{{ 'All valid email domains are accepted' if '*' in allowed_domains else (allowed_domains|join(', ') if allowed_domains else 'None configured') }}</strong>.</p>
+    {% if has_permission('manage_settings') and '*' not in allowed_domains %}
+    <label class="confirmation-row">
+      <input type="checkbox" name="authorize_recipient_domains" value="yes" {% if values.authorize_recipient_domains %}checked{% endif %}>
+      <span>I confirm authorization and approve any new recipient domains entered here.</span>
+    </label>
+    {% endif %}
+    <p class="help">Preview mode accepts valid email domains. Live SMTP delivery requires a specific Administrator-approved client-domain allowlist.</p>
+
+    <label for="name">Campaign name</label>
+    <input id="name" name="name" maxlength="120" required value="{{ values.name }}" placeholder="Annual Security Awareness 2026">
+
+    <label for="subject">Email subject</label>
+    <input id="subject" name="subject" maxlength="160" required value="{{ values.subject }}" placeholder="Action requested: review security notice">
+
+    <label for="body">Email body</label>
+    <textarea id="body" name="body" rows="11" maxlength="5000" required>{{ values.body }}</textarea>
+    <p class="help">Supported placeholder: <code>{{'{{first_name}}'}}</code>. External links and HTML are blocked.</p>
+  </section>
+
+  <section class="card">
+    <h2>3. Configure the click-response page</h2>
+    <p>When a recipient clicks the simulated link, this educational message and optional image or video are shown immediately.</p>
+
+    <label for="failure_message">Educational message</label>
+    <textarea id="failure_message" name="failure_message" rows="5" maxlength="1000">{{ values.failure_message }}</textarea>
+
+    <label for="failure_media">Optional image or video</label>
+    <input id="failure_media" name="failure_media" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm">
+    <p class="help"><strong>{{ media_upload_control_id }} secure validation:</strong> JPG, PNG, GIF, WebP, MP4, or WebM only. MP4/WebM video uploads have no PhishGuard application-level size limit; images remain limited to {{ max_training_media_mb }} MB. Filename extension, declared media type, binary file signature, and stored-file integrity are checked. Videos are streamed during upload and playback.</p>
+  </section>
+
+  <button type="submit" name="action" value="create">Create campaign and add recipients</button>
+  <a class="secondary-link" href="{{ url_for('dashboard') }}">Cancel</a>
+</form>
+{% endblock %}

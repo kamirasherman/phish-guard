@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PhishGuard | Training Complete</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='training-integration.css') }}">
+</head>
+<body>
+<main class="completion-page">
+  <section class="completion-card">
+    <a class="brand completion-brand" href="{{ url_for('landing') }}">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M24 4 40 10v12c0 10.6-6.7 17.7-16 22-9.3-4.3-16-11.4-16-22V10l16-6Z" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="m17.5 24 4.2 4.2 9.2-10" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span>PHISH<span>GUARD</span></span>
+    </a>
+    <div class="completion-check" aria-hidden="true">✓</div>
+    <p class="eyebrow completion-eyebrow"><span>Complete</span> Awareness training</p>
+    <h1>Training<br><em>complete.</em></h1>
+    <p class="lede">Your completion was recorded for {{ organization_name }}.{% if quiz_score is not none %} You passed the knowledge check with a score of <strong>{{ quiz_score }}%</strong>.{% endif %} You may close this page or return to the awareness lesson.</p>
+    <a class="primary-button" href="{{ url_for('landing') }}#lesson">Review the lesson <span aria-hidden="true">→</span></a>
+  </section>
+</main>
+</body>
+</html>

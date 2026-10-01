@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Awareness Trainer{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="site-header">
+  <div>
+    <a class="header-brand-link" href="{{ url_for('landing') }}"><strong>Phishing Awareness Trainer</strong></a>
+    <span class="subtitle">Authorized training only · {{ config.BUILD_LABEL }}</span>
+  </div>
+  {% if current_user %}
+  <div class="header-actions">
+    <span class="user-context" title="Signed-in role">{{ current_user.display_name }} · {{ role_definitions[current_user.role].label }}</span>
+    <a href="{{ url_for('landing') }}">Awareness home</a>
+    <a href="{{ url_for('dashboard') }}">Campaigns</a>
+    {% if has_permission('manage_settings') %}<a href="{{ url_for('recipient_domain_settings') }}">Domain mode</a>{% endif %}
+    {% if has_permission('manage_settings') %}<a href="{{ url_for('smtp_settings') }}">SMTP settings</a>{% endif %}
+    {% if has_permission('manage_users') %}<a href="{{ url_for('users') }}">Users & roles</a>{% endif %}
+    {% if has_permission('view_audit_log') %}<a href="{{ url_for('audit_log') }}">Audit log</a>{% endif %}
+    {% if has_permission('run_system_tests') %}<a href="{{ url_for('system_tests') }}">Run tests</a>{% endif %}
+    <form method="post" action="{{ url_for('logout') }}" class="inline-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="link-button" type="submit">Sign out</button>
+    </form>
+  </div>
+  {% endif %}
+</header>
+<main class="container">
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="flash {{ category }}">{{ message }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</main>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Campaigns{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Training campaigns</h1>
+    <p>Create a campaign, enter authorized recipients from any valid email domain, and preview messages before enabling SMTP.</p>
+  </div>
+  {% if has_permission('manage_campaigns') %}<a class="button" href="{{ url_for('new_campaign') }}">New campaign</a>{% endif %}
+</div>
+
+<div class="notice">
+  This application records delivery, link click, and training completion only. It does not collect passwords, message opens, IP addresses, or browser fingerprints.
+</div>
+
+{% if campaigns %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Campaign</th><th>Status</th><th>Recipients</th><th>Delivered</th><th>Clicked</th><th>Completed</th><th></th></tr></thead>
+  <tbody>
+  {% for c in campaigns %}
+    <tr>
+      <td>{{ c.name }}</td>
+      <td><span class="badge">{{ c.status }}</span></td>
+      <td>{{ c.recipients }}</td>
+      <td>{{ c.delivered }}</td>
+      <td>{{ c.clicked }}</td>
+      <td>{{ c.completed }}</td>
+      <td>{% if has_permission('view_results') %}<a href="{{ url_for('campaign_detail', campaign_id=c.id) }}">Open</a>{% else %}<span class="help">Summary only</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<section class="card"><p>No campaigns have been created.</p></section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block title %}{{ campaign.name }}{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>{{ campaign.name }}</h1>
+    <p><strong>Subject:</strong> {{ campaign.subject }}</p>
+  </div>
+  <a href="{{ url_for('dashboard') }}">Back to campaigns</a>
+</div>
+
+<section
+  class="card live-status-card"
+  id="campaign-live-status"
+  data-status-url="{{ url_for('campaign_status', campaign_id=campaign.id) }}"
+  aria-live="polite"
+>
+  <div class="status-heading">
+    <div>
+      <h2>Live campaign status</h2>
+      <p class="help">Updates automatically while this page is open. No recipient addresses are included in the status request.</p>
+    </div>
+    <span class="badge" id="campaign-status-label">{{ campaign.status|title }}</span>
+  </div>
+  <div class="metric-grid">
+    <div><strong id="metric-recipients">{{ recipients|length }}</strong><span>Recipients</span></div>
+    <div><strong id="metric-delivered">0</strong><span>Delivered</span></div>
+    <div><strong id="metric-clicked">0</strong><span>Clicked / failed</span></div>
+    <div><strong id="metric-completed">0</strong><span>Training complete</span></div>
+  </div>
+  <div id="dispatch-progress-panel" {% if not latest_dispatch_job %}hidden{% endif %}>
+    <div class="progress-copy">
+      <strong id="dispatch-status-label">{{ latest_dispatch_job.status|title if latest_dispatch_job else '' }}</strong>
+      <span id="dispatch-progress-copy">
+        {% if latest_dispatch_job %}{{ latest_dispatch_job.processed_recipients }} of {{ latest_dispatch_job.total_recipients }} processed{% endif %}
+      </span>
+    </div>
+    <progress id="dispatch-progress" max="{{ latest_dispatch_job.total_recipients if latest_dispatch_job else 1 }}" value="{{ latest_dispatch_job.processed_recipients if latest_dispatch_job else 0 }}"></progress>
+    <p class="help" id="dispatch-result-copy">
+      {% if latest_dispatch_job %}{{ latest_dispatch_job.sent_recipients }} sent · {{ latest_dispatch_job.failed_recipients }} failed{% endif %}
+    </p>
+  </div>
+</section>
+
+{% if has_permission('manage_campaigns') %}
+<div class="grid two">
+<section class="card">
+  <h2>1. Enter recipients</h2>
+  <p>Enter one address per line. Add an optional first name after a comma.</p>
+  <p><strong>Recipient domains:</strong> {{ 'All valid email domains are accepted' if '*' in allowed_domains else (allowed_domains|join(', ') if allowed_domains else 'None configured') }}</p>
+  <form method="post" action="{{ url_for('add_recipients', campaign_id=campaign.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="recipient_entries">Email entries</label>
+    <textarea id="recipient_entries" name="recipient_entries" rows="7" placeholder="alex@example.org,Alex&#10;jordan@example.org,Jordan" required></textarea>
+    {% if has_permission('manage_settings') and '*' not in allowed_domains %}
+    <label class="confirmation-row">
+      <input type="checkbox" name="authorize_recipient_domains" value="yes">
+      <span>I confirm authorization and approve any new recipient domains entered here.</span>
+    </label>
+    {% endif %}
+    <button type="submit">Add recipients</button>
+  </form>
+  <hr>
+  <h3>PhishGuard Test Users</h3>
+  <p>Add all active members of the default test-participant group who have email addresses. Current available group members: <strong>{{ test_group_count }}</strong>.</p>
+  <form method="post" action="{{ url_for('add_test_group_recipients', campaign_id=campaign.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="secondary-button" {% if not test_group_count %}disabled{% endif %}>Add test-user group</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>2. Or import a CSV</h2>
+  <p>CSV columns: <code>email</code> and optional <code>first_name</code>.</p>
+  <form method="post" action="{{ url_for('import_recipients', campaign_id=campaign.id) }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="recipients">Recipient CSV</label>
+    <input id="recipients" type="file" name="recipients" accept=".csv,text/csv" required>
+    {% if has_permission('manage_settings') and '*' not in allowed_domains %}
+    <label class="confirmation-row">
+      <input type="checkbox" name="authorize_recipient_domains" value="yes">
+      <span>I confirm authorization and approve any new recipient domains in this CSV.</span>
+    </label>
+    {% endif %}
+    <button type="submit">Import CSV</button>
+  </form>
+</section>
+</div>
+
+<div class="grid two">
+<section class="card">
+  <h2>3. Click-response media</h2>
+  <p>Update the message and optional media recipients see after clicking the simulation.</p>
+  <form method="post" action="{{ url_for('update_campaign_media', campaign_id=campaign.id) }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="failure_message">Educational message</label>
+    <textarea id="failure_message" name="failure_message" rows="5" maxlength="1000">{{ campaign.failure_message or '' }}</textarea>
+    <label for="failure_media">Replace or add media</label>
+    <input id="failure_media" name="failure_media" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm">
+    <p class="help"><strong>{{ media_upload_control_id }} secure validation:</strong> JPG, PNG, GIF, WebP, MP4, or WebM only. MP4/WebM video uploads have no PhishGuard application-level size limit; images remain limited to {{ max_training_media_mb }} MB. Filename extension, declared media type, binary file signature, and stored-file integrity are checked.</p>
+    <button type="submit">Save response page</button>
+  </form>
+  {% if campaign.media_filename %}
+    <div class="media-status">
+      <p><strong>Current media:</strong> {{ campaign.media_original_name }}</p>
+      {% if campaign.media_mime.startswith('image/') %}
+        <img class="admin-media-preview" src="{{ url_for('admin_campaign_media', campaign_id=campaign.id) }}" alt="Current training response image">
+      {% else %}
+        <video class="admin-media-preview" controls preload="metadata">
+          <source src="{{ url_for('admin_campaign_media', campaign_id=campaign.id) }}" type="{{ campaign.media_mime }}">
+        </video>
+      {% endif %}
+      <form method="post" action="{{ url_for('delete_campaign_media', campaign_id=campaign.id) }}" onsubmit="return confirm('Remove the current media?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="danger" type="submit">Remove media</button>
+      </form>
+    </div>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>4. Training quiz</h2>
+  <p>Upload a bounded JSON knowledge check containing exactly {{ quiz_question_count }} multiple-choice questions. The quiz appears after the campaign training media.</p>
+  <p><a href="{{ url_for('download_quiz_template') }}">Download the five-question starter quiz</a>, edit its wording if needed, and retain the documented JSON structure.</p>
+  <form method="post" action="{{ url_for('upload_campaign_quiz', campaign_id=campaign.id) }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="quiz_file">Quiz JSON file</label>
+    <input id="quiz_file" name="quiz_file" type="file" accept=".json,application/json,text/json" required>
+    <p class="help">Exactly {{ quiz_question_count }} questions; 2–5 choices each; maximum {{ quiz_upload_max_kb }} KB. Replacing a quiz removes attempts tied to the earlier version.</p>
+    <button type="submit">{{ 'Replace quiz' if quiz else 'Upload quiz' }}</button>
+  </form>
+  {% if quiz %}
+    <div class="media-status">
+      <p><strong>Current quiz:</strong> {{ quiz.title }}</p>
+      <p><strong>Passing score:</strong> {{ quiz.passing_score }}% · <strong>Uploaded file:</strong> {{ quiz.original_filename }}</p>
+      <form method="post" action="{{ url_for('delete_campaign_quiz', campaign_id=campaign.id) }}" onsubmit="return confirm('Remove this quiz and all of its attempt records?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="danger" type="submit">Remove quiz</button>
+      </form>
+    </div>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>5. Dispatch</h2>
+  {% if smtp_enabled %}
+    {% if smtp_ready %}
+      <p class="warning">SMTP is verified and live. Messages will be sent only to recipients in the authorized domain allowlist.</p>
+    {% else %}
+      <p class="warning">SMTP live delivery is blocked until preflight issues are resolved.</p>
+      <ul>{% for issue in smtp_issues %}<li>{{ issue }}</li>{% endfor %}</ul>
+      {% if has_permission('manage_settings') %}<p><a href="{{ url_for('smtp_settings') }}">Open SMTP settings</a></p>{% endif %}
+    {% endif %}
+  {% else %}
+    <p>Preview mode is active. Messages will be written as <code>.eml</code> files to the configured outbox.</p>
+  {% endif %}
+  <p><strong>Recipients currently loaded:</strong> {{ recipients|length }}</p>
+  {% if has_permission('dispatch_campaigns') %}
+  <form method="post" action="{{ url_for('dispatch_campaign', campaign_id=campaign.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" {% if (smtp_enabled and not smtp_ready) or (latest_dispatch_job and latest_dispatch_job.status in ['queued', 'running']) %}disabled{% endif %}>{{ 'Send campaign' if smtp_enabled else 'Generate preview messages' }}</button>
+  </form>
+  {% endif %}
+</section>
+</div>
+{% else %}
+<section class="notice"><strong>Read-only access.</strong> Your role can review campaign details and results but cannot change recipients, media, or campaign configuration.</section>
+{% endif %}
+
+<section class="card">
+  <h2>Campaign sender identity</h2>
+  <p><strong>Simulation identity:</strong> {{ campaign.simulation_alias or '—' }}</p>
+  <p><strong>Authenticated sender:</strong> {{ campaign.live_sender_email or '—' }}</p>
+  <p class="help">The simulation identity is shown as the display identity while the authenticated SMTP address remains present in the message headers.</p>
+</section>
+
+<section class="card">
+  <h2>Campaign message</h2>
+  <pre class="message-preview">{{ campaign.body }}</pre>
+</section>
+
+<section class="card">
+  <h2>Recipient results</h2>
+  {% if recipients %}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Email</th><th>Name</th><th>Delivered</th><th>Clicked</th>{% if quiz %}<th>Quiz score</th><th>Quiz status</th><th>Attempts</th>{% endif %}<th>Completed</th></tr></thead>
+    <tbody>
+    {% for r in recipients %}
+      <tr>
+        <td>{{ r.email }}</td>
+        <td>{{ r.first_name or '—' }}</td>
+        <td>{{ r.delivered_at or '—' }}</td>
+        <td>{{ r.clicked_at or '—' }}</td>
+        {% if quiz %}
+        <td>{{ (r.quiz_score|string ~ '%') if r.quiz_score is not none else '—' }}</td>
+        <td>{% if r.quiz_passed == 1 %}<span class="badge">Passed</span>{% elif r.quiz_passed == 0 %}<span class="badge">Retry required</span>{% else %}—{% endif %}</td>
+        <td>{{ r.quiz_attempts }}</td>
+        {% endif %}
+        <td>{{ r.completed_at or '—' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+    <p>No recipients have been added.</p>
+  {% endif %}
+</section>
+
+{% if has_permission('delete_campaigns') %}
+<section class="danger-zone">
+  <h2>Data retention</h2>
+  <p>Delete the campaign after reports are finalized to remove recipient, event, quiz-attempt, quiz, and uploaded-media records.</p>
+  <form method="post" action="{{ url_for('purge_campaign', campaign_id=campaign.id) }}" onsubmit="return confirm('Delete this campaign and all associated data?')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="danger" type="submit">Delete campaign data</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='campaign-status.js') }}" defer></script>{% endblock %}

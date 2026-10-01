@@ -1,0 +1,56 @@
+PhishGuard RBAC + Audit + SMTP + PB-21 + Training Quiz + Persistent Dispatch + HTTPS Build - Static Verification
+Date: 2026-09-02
+
+PASS - app.py, audit_logger.py, scripts/backup_instance.py, and tests/test_app.py parse and compile.
+PASS - Basic structural balance checks pass for all 14 Jinja HTML templates.
+PASS - SQLite schema creates users, campaigns, recipients, events, quizzes, quiz_attempts, dispatch_jobs, and dispatch_job_recipients tables with required relationships and indexes.
+PASS - Audit logger writes valid JSON-lines records.
+PASS - Supplied audit_logger (2).py event schema and three-failure/five-minute lockout behavior are preserved in the integrated audit_logger.py module.
+PASS - Sensitive keys (token, password, raw_ip) are redacted in isolated audit tests.
+PASS - Request audit context records only method, Flask endpoint, and matched route pattern; raw paths, query strings, and individualized training tokens are excluded.
+PASS - Three failed attempts trigger the supplied lockout rule; simulated cooldown expiration restores access.
+PASS - Integration markers for /audit, /settings/smtp, RBAC permissions, login audit hooks, SMTP settings, connection verification, and campaign preflight are present.
+PASS - SMTP passwords are masked in the interface and are not included in audit metadata.
+PASS - Live dispatch requires a verified saved-settings fingerprint, public HTTPS BASE_URL, valid sender, and explicit recipient-domain allowlist.
+PASS - SMTP unit-test coverage was added for settings persistence, secret masking, preflight blocking, connection verification, and harmless test delivery.
+PASS - SMTP settings expose the Google Workspace/Gmail sender preset and an explicit, Administrator-confirmed gmail.com recipient authorization option.
+PASS - Enabling Gmail simulation recipients replaces preview wildcard mode with gmail.com, preserves other explicit domains, and does not bypass SMTP/HTTPS verification safeguards.
+PASS - Gmail-domain configuration is audited without recording the SMTP password or full recipient addresses.
+PASS - Safe build defaults provide an HTTPS deployment placeholder plus the Gmail SMTP preset while keeping ENABLE_SMTP=false.
+PASS - Live-delivery preflight rejects the packaged training.example.org placeholder until an Administrator supplies the actual public HTTPS deployment URL.
+PASS - Quick_Start.bat retains a functional local preview URL and does not enable live SMTP.
+PASS - MP4/WebM video uploads have no PhishGuard application-level size cap; images retain the configurable MAX_TRAINING_MEDIA_MB ceiling.
+PASS - Media storage copies uploads in 1 MB chunks to a temporary file and atomically promotes completed uploads.
+PASS - Campaign and recipient media routes retain conditional range-response support for long-video seeking.
+PASS - Automated test coverage was added for an MP4 above the former 20 MB limit, exact stored byte count, configurable rejection, and a partial-content range response.
+PASS - PB-21 limits filenames to 255 sanitized characters and permits only JPG, JPEG, PNG, GIF, WebP, MP4, and WebM extensions with matching MIME types.
+PASS - PB-21 validates format-specific binary signatures, container structure, required end markers, and post-write file integrity before atomic publication.
+PASS - MEDIA_UPLOAD_REJECTED audit events record PB-21 and a validation reason without filenames or file contents.
+PASS - Automated PB-21 coverage was added for MIME mismatch, spoofed MP4 content, truncated image content, unsupported extensions, and configurable size rejection.
+PASS - The supplied 2:54 MP4 is included as test media and passes PB-21 MP4 type/signature validation without an application-level video-size cap.
+PASS - The included five-question JSON quiz is aligned to the supplied Cyber Awareness training video.
+PASS - Quiz validation enforces UTF-8 JSON, a .json filename/MIME type, a 256 KB limit, exactly five questions, bounded unique choices, valid answer indexes, explanations, and a 50-100% passing score.
+PASS - Quiz routes enforce manage_campaigns permissions, require CSRF protection, block legacy completion bypass, and record safe audit events without question content or training tokens.
+PASS - Quiz scoring records attempts, reveals feedback after submission, requires the passing score for completion, and exposes score/status/attempt counts to authorized results users.
+PASS - Automated test coverage was added for quiz upload, rendering, failed retry, passing completion, reporting, bypass prevention, invalid question count, and audit rejection.
+PASS - The stale completion assertion now checks the stable completion sentence instead of searching for heading words separated by HTML markup.
+PASS - The Administrator-only /system-tests interface launches the fixed packaged test command, prevents concurrent runs, captures bounded output and exit status, and enforces CSRF and RBAC.
+PASS - In-app test runs use isolated temporary database, media, outbox, settings, and audit paths; live SMTP is forced off.
+PASS - SYSTEM_TEST_RUN_STARTED and SYSTEM_TEST_RUN_COMPLETED audit events contain bounded status metadata without captured pytest output.
+PASS - Dispatch runs through a persistent SQLite queue, checkpoints each recipient, prevents duplicate active jobs, and returns interrupted work to queued state after restart.
+PASS - The authenticated no-cache campaign-status endpoint returns aggregate delivery, clicked/failed, quiz-pass, completion, and dispatch progress without recipient addresses.
+PASS - External campaign-status JavaScript polls every 2.5 seconds and keeps participant result counts current after message dispatch completes.
+PASS - Active live jobs lock SMTP and recipient-domain settings; the worker rechecks the verified SMTP fingerprint and readiness before sending.
+PASS - SQLite application and worker connections enable foreign keys, WAL journaling, NORMAL synchronization, and a five-second busy timeout.
+PASS - Direct and in-application test runs force SMTP and background dispatch off and isolate runtime paths before app import.
+PASS - Dockerfile runs Waitress as a non-root user; compose.yaml parses and defines the app, Caddy, named persistent volumes, and readiness health check.
+PASS - Caddyfile provides automatic HTTPS reverse proxying and transport/security headers without exposing application port 8000.
+PASS - .dockerignore excludes .env credential files, active instance data, backups, virtual environments, and Python caches from the image.
+PASS - Online backup test created a consistent SQLite/instance archive with a sensitive-data warning and expected contents.
+PASS - Automated test source now defines 39 test functions, including persistent dispatch, duplicate blocking, restart recovery, and live status coverage.
+PASS - The updated DOCX change record was rendered and visually reviewed page by page without clipping or overlap.
+NOT RUN IN BUILD CONTAINER - Docker/Caddy runtime and public certificate issuance because no Docker daemon, client DNS name, or approved server was supplied.
+NOT RUN IN BUILD CONTAINER - Live SMTP connection/delivery because no approved client SMTP host or credential was supplied.
+NOT RUN IN BUILD CONTAINER - Full Flask/pytest runtime suite because Flask/Werkzeug are not installed and Internet package installation is unavailable.
+
+Run Run_Tests.bat on the extracted Windows test system to execute the complete pytest suite after requirements are installed.

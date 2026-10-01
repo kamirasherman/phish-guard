@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PhishGuard | Security Awareness Exercise</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='training-integration.css') }}">
+</head>
+<body>
+<main class="campaign-page training-integration-page">
+  <nav class="campaign-nav">
+    <a class="brand" href="{{ url_for('landing') }}">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M24 4 40 10v12c0 10.6-6.7 17.7-16 22-9.3-4.3-16-11.4-16-22V10l16-6Z" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="m17.5 24 4.2 4.2 9.2-10" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span>PHISH<span>GUARD</span></span>
+    </a>
+    <span class="training-badge"><i></i> Authorized simulation</span>
+  </nav>
+
+  <section class="campaign-content training-content">
+    <div class="campaign-heading">
+      <p class="campaign-kicker"><span>!</span> This was a phishing awareness test</p>
+      <h1>You clicked<br>the link.</h1>
+      <p>{{ first_name or 'You' }}, this was an authorized simulation for {{ organization_name }}. No password or authentication code was requested or collected.</p>
+    </div>
+
+    <div class="video-column training-feedback-column">
+      <section class="training-panel">
+        <p class="panel-label">Immediate learning feedback</p>
+        {% if failure_message %}<p class="feedback-message">{{ failure_message }}</p>{% endif %}
+        {% if has_media %}
+          <div class="training-media-shell">
+          {% if media_mime.startswith('image/') %}
+            <img class="training-media-integrated" src="{{ url_for('training_media', token=token) }}" alt="Security awareness training illustration">
+          {% elif media_mime.startswith('video/') %}
+            <video class="training-media-integrated" controls playsinline preload="metadata">
+              <source src="{{ url_for('training_media', token=token) }}" type="{{ media_mime }}">
+              Your browser does not support the training video.
+            </video>
+          {% endif %}
+          </div>
+        {% endif %}
+
+        <div class="lesson-grid">
+          <div><h2>Warning signs</h2><ul><li>Unexpected urgency or curiosity.</li><li>Links asking for immediate action.</li><li>A familiar display name with an unverified sender address.</li><li>Requests that bypass normal workplace procedures.</li></ul></div>
+          <div><h2>Safer response</h2><ul><li>Pause before clicking.</li><li>Inspect the sender and destination.</li><li>Use a known portal instead of an email link.</li><li>Report suspicious messages through the approved process.</li></ul></div>
+        </div>
+
+        {% if quiz %}
+        <form class="training-complete-form training-quiz-form" method="post" action="{{ url_for('submit_training_quiz', token=token) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="quiz-heading">
+            <p class="panel-label">Five-question knowledge check</p>
+            <h2>{{ quiz.title }}</h2>
+            <p>Answer every question. A score of {{ quiz.passing_score }}% is required to complete the training.</p>
+          </div>
+          {% if quiz_error %}<div class="quiz-alert" role="alert">{{ quiz_error }}</div>{% endif %}
+          {% for question in quiz.questions %}
+            {% set question_index = loop.index0 %}
+            <fieldset class="quiz-question">
+              <legend>{{ loop.index }}. {{ question.prompt }}</legend>
+              {% for choice in question.choices %}
+                {% set choice_index = loop.index0 %}
+                <label class="quiz-choice">
+                  <input type="radio" name="question_{{ question_index }}" value="{{ choice_index }}" required {% if selected_answers.get('question_' ~ question_index) == choice_index|string %}checked{% endif %}>
+                  <span>{{ choice }}</span>
+                </label>
+              {% endfor %}
+              {% if quiz_feedback %}
+                <div class="quiz-feedback {{ 'correct' if quiz_feedback[question_index].is_correct else 'incorrect' }}">
+                  <strong>{{ 'Correct.' if quiz_feedback[question_index].is_correct else 'Not quite.' }}</strong>
+                  {{ quiz_feedback[question_index].explanation }}
+                  {% if not quiz_feedback[question_index].is_correct %}
+                    <span class="correct-answer">Correct answer: {{ question.choices[quiz_feedback[question_index].correct_index] }}</span>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </fieldset>
+          {% endfor %}
+          <button class="learn-button training-submit" type="submit">{{ 'Try quiz again' if quiz_feedback else 'Submit quiz' }} <span aria-hidden="true">→</span></button>
+        </form>
+        {% else %}
+          <form class="training-complete-form" method="post" action="{{ url_for('complete_training', token=token) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label class="training-check"><input type="checkbox" name="acknowledged" value="yes" required> <span>I reviewed the warning signs and safer-response steps.</span></label>
+            <button class="learn-button training-submit" type="submit">Complete training <span aria-hidden="true">→</span></button>
+          </form>
+        {% endif %}
+      </section>
+    </div>
+  </section>
+  <div class="campaign-footer"><span>Think before you click.</span><span>Cybersecurity awareness training</span></div>
+</main>
+</body>
+</html>

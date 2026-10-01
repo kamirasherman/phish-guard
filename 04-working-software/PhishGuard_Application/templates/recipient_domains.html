@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Recipient Domains{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Recipient domain settings</h1>
+    <p>Preview mode may use broad recipient entry. Live SMTP delivery requires the specifically authorized client domains.</p>
+  </div>
+  <a href="{{ url_for('dashboard') }}">Back to campaigns</a>
+</div>
+
+<section class="card narrow-card">
+  <form method="post" class="stacked-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="domains">Domain mode</label>
+    <textarea id="domains" name="domains" rows="8" placeholder="*">{{ domains }}</textarea>
+    <p class="help">Use <code>*</code> only for local preview testing. Before live SMTP delivery, enter each authorized client domain explicitly, one per line.</p>
+    <label class="confirmation-row">
+      <input type="checkbox" name="authorization_confirmed" value="yes" required>
+      <span>I confirm that I will use only recipient addresses authorized for awareness testing.</span>
+    </label>
+    <button type="submit">Save domain mode</button>
+  </form>
+</section>
+
+<section class="notice">
+  Wildcard mode permits preview recipient entry but blocks live SMTP dispatch. The quick-start configuration generates local <code>.eml</code> preview files until SMTP is deliberately configured and verified.
+</section>
+{% endblock %}

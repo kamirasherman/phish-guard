@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Audit Log{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Security audit log</h1>
+    <p>Administrator-only view of recent authentication, user-administration, settings, and campaign-management events.</p>
+  </div>
+  <a href="{{ url_for('dashboard') }}">Back to campaigns</a>
+</div>
+
+<section class="card">
+  <div class="audit-toolbar">
+    <p class="help"><strong>Source:</strong> {{ audit_filename }} · newest first · showing up to {{ limit }} records</p>
+    <form method="get" class="audit-limit-form">
+      <label for="limit">Records</label>
+      <select id="limit" name="limit">
+        {% for value in [50, 100, 250, 500, 1000] %}
+          <option value="{{ value }}" {% if limit == value %}selected{% endif %}>{{ value }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="secondary-button">Refresh</button>
+    </form>
+  </div>
+  {% if events %}
+  <div class="table-wrap">
+    <table class="audit-table">
+      <thead>
+        <tr><th>Time (UTC)</th><th>Actor</th><th>Action</th><th>Outcome</th><th>Target</th><th>Metadata</th></tr>
+      </thead>
+      <tbody>
+      {% for event in events %}
+        <tr>
+          <td><code>{{ event.timestamp }}</code></td>
+          <td>{{ event.actor.user_id }}<br><span class="help">{{ event.actor.role }}</span></td>
+          <td><strong>{{ event.action }}</strong></td>
+          <td><span class="badge audit-outcome {{ event.outcome|lower }}">{{ event.outcome }}</span></td>
+          <td><code>{{ event.target|tojson }}</code></td>
+          <td><code>{{ event.metadata|tojson }}</code></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p>No audit events have been recorded yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

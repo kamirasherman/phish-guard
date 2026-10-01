@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Users & Roles{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Users & roles</h1>
+    <p>Create staff accounts with least-privilege roles or add non-privileged participants to the PhishGuard Test Users group.</p>
+  </div>
+  <a href="{{ url_for('dashboard') }}">Back to campaigns</a>
+</div>
+
+<section class="card">
+  <h2>Least-privilege role model</h2>
+  <div class="role-grid">
+    {% for key, role in role_definitions.items() %}
+      <div class="role-card">
+        <div class="role-card-heading">
+          <strong>{{ role.label }}</strong>
+          {% if key == 'administrator' %}<span class="badge admin-badge">Full access</span>{% endif %}
+        </div>
+        <p>{{ role.description }}</p>
+        <p class="help"><strong>Access:</strong> {{ role.permissions|list|sort|join(', ') }}</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <h2>Default user groups</h2>
+  <div class="role-grid">
+    {% for key, group in user_group_definitions.items() %}
+      <div class="role-card">
+        <div class="role-card-heading"><strong>{{ group.label }}</strong></div>
+        <p>{{ group.description }}</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <h2>Create user</h2>
+  <form method="post" class="user-create-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="grid two">
+      <div>
+        <label for="username">Username</label>
+        <input id="username" name="username" maxlength="40" required autocomplete="off" placeholder="alex.morgan">
+      </div>
+      <div>
+        <label for="display_name">Display name</label>
+        <input id="display_name" name="display_name" maxlength="120" required placeholder="Alex Morgan">
+      </div>
+      <div>
+        <label for="email">Email (optional)</label>
+        <input id="email" name="email" type="email" maxlength="254" placeholder="alex@example.org">
+      </div>
+      <div>
+        <label for="account_group">User group</label>
+        <select id="account_group" name="account_group" required>
+          {% for key, group in user_group_definitions.items() %}
+            <option value="{{ key }}">{{ group.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="role">Staff role</label>
+        <select id="role" name="role" required>
+          {% for key, role in role_definitions.items() %}
+            <option value="{{ key }}">{{ role.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <label for="password">Temporary password</label>
+    <input id="password" name="password" type="password" minlength="12" maxlength="128" autocomplete="new-password">
+    <p class="help">Required for Application Staff. Leave blank for PhishGuard Test Users; test participants do not receive staff portal access.</p>
+    <button type="submit">Create user</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Existing users</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>User</th><th>Group, role & status</th><th>Reset password</th></tr></thead>
+      <tbody>
+      {% for user in users %}
+        <tr>
+          <td>
+            <strong>{{ user.display_name }}</strong><br>
+            <span class="help">{{ user.username }}{% if user.email %} · {{ user.email }}{% endif %}</span>
+          </td>
+          <td>
+            <form method="post" action="{{ url_for('update_user', user_id=user.id) }}" class="compact-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <select name="account_group" aria-label="Group for {{ user.username }}">
+                {% for key, group in user_group_definitions.items() %}
+                  <option value="{{ key }}" {% if user.account_group == key %}selected{% endif %}>{{ group.label }}</option>
+                {% endfor %}
+              </select>
+              <select name="role" aria-label="Role for {{ user.username }}" {% if user.account_group == 'phishguard_test_users' %}title="Test users have no staff permissions"{% endif %}>
+                {% for key, role in role_definitions.items() %}
+                  <option value="{{ key }}" {% if user.role == key %}selected{% endif %}>{{ role.label }}</option>
+                {% endfor %}
+              </select>
+              <label class="confirmation-row compact-check">
+                <input type="checkbox" name="active" value="yes" {% if user.active %}checked{% endif %}>
+                <span>Active</span>
+              </label>
+              {% if user.account_group == 'phishguard_test_users' %}<span class="help">No staff portal access</span>{% endif %}
+              <button type="submit" class="secondary-button">Save access</button>
+            </form>
+          </td>
+          <td>
+            {% if user.account_group == 'application_staff' %}
+              <form method="post" action="{{ url_for('reset_user_password', user_id=user.id) }}" class="compact-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label class="sr-only" for="password-{{ user.id }}">New password for {{ user.username }}</label>
+                <input id="password-{{ user.id }}" name="password" type="password" minlength="12" maxlength="128" required autocomplete="new-password" placeholder="New password">
+                <button type="submit" class="secondary-button">Reset password</button>
+              </form>
+            {% else %}
+              <span class="help">No staff portal password is assigned to test participants.</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

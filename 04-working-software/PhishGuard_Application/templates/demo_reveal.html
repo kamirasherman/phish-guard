@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PhishGuard | Awareness Test Reveal</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
+</head>
+<body>
+<main class="campaign-page">
+  <nav class="campaign-nav">
+    <a class="brand" href="{{ url_for('landing') }}">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M24 4 40 10v12c0 10.6-6.7 17.7-16 22-9.3-4.3-16-11.4-16-22V10l16-6Z" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="m17.5 24 4.2 4.2 9.2-10" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span>PHISH<span>GUARD</span></span>
+    </a>
+    <span class="training-badge"><i></i> Simulated campaign</span>
+  </nav>
+
+  <section class="campaign-content">
+    <div class="campaign-heading">
+      <p class="campaign-kicker"><span>!</span> This was a phishing awareness test</p>
+      <h1>You clicked<br>the link.</h1>
+      {% if campaign_mode %}
+      <p>{{ first_name or 'You' }}, this was an authorized simulation for {{ organization_name }}. No credentials or authentication codes were collected.</p>
+      {% else %}
+      <p>Don’t worry—this was a safe demonstration. No credentials or authentication codes were collected.</p>
+      {% endif %}
+    </div>
+
+    <div class="video-column">
+      <div class="video-shell">
+        <div class="video-topbar"><span><i></i> PhishGuard Training Moment</span><span>SAFE SIMULATION / RICKROLL REVEAL</span></div>
+        <div class="video-frame">
+          <video id="phishguard-rickroll" class="rickroll-video" autoplay loop playsinline preload="auto" aria-label="PhishGuard Rickroll training reveal">
+            <source src="{{ url_for('static', filename='media/rr.mp4') }}" type="video/mp4">
+            Your browser does not support HTML5 video playback.
+          </video>
+          <button id="rickroll-play-fallback" class="rickroll-play-fallback" type="button" hidden>
+            Play reveal
+          </button>
+        </div>
+        <div class="phishguard-video-caption">
+          You were rickrolled as part of a safe phishing awareness simulation. Please click on the start button below to review the lesson.
+        </div>
+      </div>
+
+      <div id="training-box" class="video-shell training-video-shell">
+        <div class="video-topbar"><span><i></i> Cyber Awareness Training</span><span>REQUIRED NEXT STEP</span></div>
+        <div class="video-frame training-video-frame">
+          <video id="phishguard-training-video" class="training-video" controls playsinline preload="metadata" aria-label="Cyber awareness phishing training video">
+            <source src="{{ url_for('static', filename='media/phishing_awareness_training.mp4') }}" type="video/mp4">
+            Your browser does not support HTML5 video playback.
+          </video>
+          <div id="training-start-overlay" class="training-start-overlay">
+            <div class="training-start-panel">
+              <span class="training-start-eyebrow">NEXT STEP</span>
+              <strong>Ready to begin your training?</strong>
+              <p>Start the awareness lesson when you are ready.</p>
+              <button id="start-training-button" class="start-training-button" type="button">Start Training</button>
+            </div>
+          </div>
+        </div>
+        <div class="phishguard-video-caption training-caption">
+          <strong>TRAINING:</strong> Review the lesson and pay attention to the warning signs that can help you recognize a suspicious message before clicking.
+        </div>
+      </div>
+
+      {% if training_continue_url %}
+      <div id="training-complete-cta" class="training-complete-cta" hidden>
+        <p><strong>Training video complete.</strong> Continue to the individualized lesson and knowledge check to Complete training.</p>
+        <a class="learn-button" href="{{ training_continue_url }}">
+          Continue to lesson
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5-5 5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+      {% else %}
+      <a class="learn-button" href="{{ url_for('landing') }}#lesson">
+        Review the phishing lesson
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5-5 5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      {% endif %}
+      <p class="campaign-note">PhishGuard lesson: stop, inspect the sender and destination, then decide whether the link deserves your click.</p>
+    </div>
+  </section>
+  <div class="campaign-footer"><span>Think before you click.</span><span>Cybersecurity awareness training</span></div>
+</main>
+
+<script src="{{ url_for('static', filename='rickroll-reveal.js') }}" defer></script>
+
+</body>
+</html>

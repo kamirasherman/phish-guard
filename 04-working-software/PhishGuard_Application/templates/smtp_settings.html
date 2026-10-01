@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}SMTP Settings{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>SMTP email delivery</h1>
+    <p>Configure an approved sender account for authorized client awareness campaigns.</p>
+  </div>
+  <a href="{{ url_for('dashboard') }}">Back to campaigns</a>
+</div>
+
+<section class="card">
+  <div class="status-heading">
+    <div>
+      <h2>Delivery status</h2>
+      {% if smtp.enabled and not readiness_issues %}
+        <p><span class="status-pill ready">Ready for authorized SMTP delivery</span></p>
+      {% elif smtp.enabled %}
+        <p><span class="status-pill blocked">Live delivery enabled but blocked by preflight</span></p>
+      {% else %}
+        <p><span class="status-pill preview">Preview mode</span></p>
+      {% endif %}
+    </div>
+    {% if smtp.verified_at %}<p class="help">Last verified: {{ smtp.verified_at }}</p>{% endif %}
+  </div>
+  {% if readiness_issues %}
+    <ul class="status-list">
+      {% for issue in readiness_issues %}<li>{{ issue }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+</section>
+
+<section class="card">
+  <form method="post" class="stacked-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h2>1. Server and sender</h2>
+
+    <label class="checkbox">
+      <input type="checkbox" name="enabled" value="yes" {% if smtp.enabled %}checked{% endif %}>
+      <span>Enable live SMTP delivery after successful verification</span>
+    </label>
+
+    <div class="grid two">
+      <div>
+        <label for="provider">Email provider</label>
+        <select id="provider" name="provider">
+          {% for key, provider in providers.items() %}
+            <option value="{{ key }}" {% if smtp.provider == key %}selected{% endif %}>{{ provider.label }}</option>
+          {% endfor %}
+        </select>
+        <p class="help">Provider presets fill in host, port, and encryption. Choose Custom for an organizational relay.</p>
+      </div>
+      <div>
+        <label for="sender_name">Sender display name</label>
+        <input id="sender_name" name="sender_name" maxlength="120" required value="{{ smtp.sender_name }}" placeholder="Security Awareness Team">
+      </div>
+      <div>
+        <label for="host">SMTP host</label>
+        <input id="host" name="host" value="{{ smtp.host }}" placeholder="smtp.example.org">
+        <p class="help">Preset providers apply their approved host after saving.</p>
+      </div>
+      <div>
+        <label for="port">SMTP port</label>
+        <input id="port" name="port" type="number" min="1" max="65535" value="{{ smtp.port }}">
+      </div>
+      <div>
+        <label for="encryption">Connection security</label>
+        <select id="encryption" name="encryption">
+          <option value="starttls" {% if smtp.encryption == 'starttls' %}selected{% endif %}>STARTTLS (usually port 587)</option>
+          <option value="ssl" {% if smtp.encryption == 'ssl' %}selected{% endif %}>Implicit TLS/SSL (usually port 465)</option>
+          <option value="none" {% if smtp.encryption == 'none' %}selected{% endif %}>None (approved internal relay only)</option>
+        </select>
+      </div>
+      <div>
+        <label for="sender_email">Approved From address</label>
+        <input id="sender_email" name="sender_email" type="email" maxlength="254" required value="{{ smtp.sender_email }}" placeholder="security-training@example.org">
+      </div>
+      <div>
+        <label for="training_domain">Default training domain</label>
+        <input id="training_domain" name="training_domain" maxlength="253" required value="{{ smtp.training_domain }}" placeholder="training.example.org">
+        <p class="help">Campaigns use this domain to generate randomized simulation identities such as <code>account-a1b2c3@{{ smtp.training_domain }}</code>. The actual SMTP From address remains the approved sender above.</p>
+      </div>
+    </div>
+
+    <label class="confirmation-row">
+      <input type="checkbox" name="training_domain_control_confirmed" value="yes" {% if smtp.training_domain == 'training.example.org' %}checked{% endif %}>
+      <span>I confirm that any custom training domain entered above is controlled or explicitly authorized by my organization. The packaged <code>training.example.org</code> value is a reserved safe default.</span>
+    </label>
+
+    <h2>2. Recipient-accessible training site</h2>
+    <div class="grid two">
+      <div>
+        <label for="base_url">Public training site URL</label>
+        <input id="base_url" name="base_url" type="url" required value="{{ smtp.base_url }}" placeholder="https://training.example.org">
+        <p class="help">Live email requires public HTTPS. Replace the packaged <code>https://training.example.org</code> placeholder with the deployed site. A local 127.0.0.1 or localhost address works only for preview testing.</p>
+      </div>
+      <div>
+        <label for="organization_name">Organization shown in training email</label>
+        <input id="organization_name" name="organization_name" maxlength="160" required value="{{ smtp.organization_name }}" placeholder="Example Organization">
+      </div>
+    </div>
+
+    <h2>3. Gmail simulation recipients</h2>
+    <label class="confirmation-row">
+      <input type="checkbox" name="authorize_gmail_recipients" value="yes" {% if gmail_recipient_authorized %}checked{% endif %}>
+      <span>I confirm that the planned <code>@gmail.com</code> recipients are authorized for this security-awareness simulation. Add <code>gmail.com</code> to the explicit live-delivery allowlist.</span>
+    </label>
+    <p class="help">When selected, preview wildcard mode is replaced with the explicit <code>gmail.com</code> domain while retaining any other specifically authorized domains. Remove the domain later from Domain mode when the simulation ends.</p>
+
+    <h2>4. Authentication</h2>
+    <div class="grid two">
+      <div>
+        <label for="username">SMTP username</label>
+        <input id="username" name="username" maxlength="254" value="{{ smtp.username }}" autocomplete="username" placeholder="security-training@example.org">
+      </div>
+      <div>
+        <label for="password">SMTP password or app password</label>
+        <input id="password" name="password" type="password" maxlength="512" autocomplete="new-password" placeholder="{% if password_set %}Saved — leave blank to keep{% else %}Enter credential{% endif %}">
+        <label class="checkbox compact-check">
+          <input type="checkbox" name="clear_password" value="yes">
+          <span>Clear the saved SMTP password</span>
+        </label>
+      </div>
+    </div>
+    <p class="help">Use a dedicated training mailbox and an app password or approved relay credential. The password is never displayed or written to the audit log.</p>
+
+    <label class="confirmation-row">
+      <input type="checkbox" name="authorization_confirmed" value="yes" required>
+      <span>I confirm this sender account is approved for authorized security-awareness testing.</span>
+    </label>
+    <button type="submit">Save SMTP settings</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>5. Verify connection</h2>
+  <p>Save the settings first. A connection test signs in without sending mail. To confirm delivery, enter one address from a specifically authorized client domain.</p>
+  <form method="post" action="{{ url_for('test_smtp_settings') }}" class="stacked-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="test_recipient">Optional authorized test recipient</label>
+    <input id="test_recipient" name="test_recipient" type="email" maxlength="254" placeholder="authorized-tester@client.example">
+    <div class="button-row">
+      <button type="submit">Verify SMTP connection</button>
+    </div>
+  </form>
+</section>
+
+<section class="notice">
+  <strong>Gmail support:</strong> choose Google Workspace / Gmail when the approved sender mailbox uses Google's SMTP service. To send an authorized simulation to personal Gmail recipients, also enable the explicit <code>gmail.com</code> recipient-domain option above, save, and verify the connection with an approved test address.
+</section>
+
+<section class="notice">
+  <strong>Before live dispatch:</strong> set a public HTTPS <code>BASE_URL</code>, replace <code>*</code> with the authorized client domain(s), verify the saved SMTP connection, and confirm the campaign population is covered by written approval.
+</section>
+
+<section class="notice">
+  <strong>Microsoft 365 note:</strong> this application currently supports SMTP username/password authentication. Microsoft recommends OAuth or another supported relay service, and SMTP AUTH may be disabled for the tenant or mailbox. Use the Microsoft 365 preset only when your administrator has explicitly approved and enabled that method.
+</section>
+{% endblock %}

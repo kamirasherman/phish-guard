@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VMS Phish-Guard Front-End Prototype</title>
+  <meta name="description" content="Front-end prototype for the VMS Phish-Guard phishing simulation and training portal." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <nav class="nav" aria-label="Primary navigation">
+      <a class="brand" href="#dashboard" aria-label="Phish-Guard dashboard">
+        <span class="brand-mark">PG</span>
+        <span><strong>VMS Phish-Guard</strong><small>Front-End Prototype</small></span>
+      </a>
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      <div class="nav-links" id="navLinks">
+        <a href="#dashboard">Dashboard</a>
+        <a href="#campaigns">Campaign</a>
+        <a href="#landing">Landing</a>
+        <a href="#training">Training</a>
+        <a href="#quiz">Quiz</a>
+        <a href="#reports">Reports</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero section-shell" id="dashboard">
+      <div class="hero-content">
+        <p class="eyebrow">Sprint 1 Product Increment</p>
+        <h1>Phishing simulation training portal prototype.</h1>
+        <p class="hero-copy">This front-end prototype shows the main user-facing experience for Phish-Guard: admin dashboard, campaign setup, safe landing page, training content, quiz, and reporting mockups.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#landing">Preview recipient flow</a>
+          <a class="button secondary" href="#campaigns">Review admin flow</a>
+        </div>
+      </div>
+      <aside class="hero-card">
+        <div class="status-pill">Ethical simulation only</div>
+        <h2>Portal Status</h2>
+        <p>Ready for client feedback. No real credentials are collected, stored, or displayed in this prototype.</p>
+        <div class="stats-grid">
+          <div><strong>50</strong><span>Sample recipients</span></div>
+          <div><strong>18</strong><span>Unique clicks</span></div>
+          <div><strong>83%</strong><span>Training completion</span></div>
+          <div><strong>78%</strong><span>Avg. quiz score</span></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section-shell" id="campaigns">
+      <div class="section-heading split-heading">
+        <div>
+          <p class="eyebrow">Admin Portal</p>
+          <h2>Campaign setup</h2>
+          <p>Prototype form for creating a controlled phishing awareness campaign. This layout can later connect to <code>POST /api/campaigns</code>.</p>
+        </div>
+        <span class="badge">DRAFT</span>
+      </div>
+      <div class="grid-2">
+        <form class="panel form-card" id="campaignForm">
+          <label>Campaign name<input type="text" value="Spring Awareness Simulation" /></label>
+          <label>Description<textarea rows="4">Controlled phishing simulation for training purposes.</textarea></label>
+          <label>Landing page title<input type="text" value="Account Verification Training" /></label>
+          <label>Training module<select><option>Spotting Phishing Red Flags</option><option>Safe Link Verification</option></select></label>
+          <button class="button primary" type="submit">Save campaign draft</button>
+        </form>
+        <div class="panel">
+          <h3>Readiness checklist</h3>
+          <ul class="check-list">
+            <li class="done">Campaign name created</li>
+            <li class="done">Training module selected</li>
+            <li class="done">Safe landing page enabled</li>
+            <li>Email template approval pending</li>
+            <li>Recipient import pending</li>
+          </ul>
+          <p class="note">Campaigns should not become active until templates, recipients, training content, and ethical safeguards are confirmed.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-shell" id="landing">
+      <div class="section-heading">
+        <p class="eyebrow">Recipient Flow</p>
+        <h2>Safe landing page simulation</h2>
+        <p>This page demonstrates the training transition after a user clicks a simulated phishing link. The form is intentionally non-credential based.</p>
+      </div>
+      <div class="landing-card">
+        <div class="mock-email-header">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+        <h3>Account Verification Training</h3>
+        <p>Before continuing, review this simulated account notice. This training page is part of an authorized awareness exercise.</p>
+        <div class="safe-alert">Safety rule: this prototype does not request or process passwords.</div>
+        <button class="button primary" id="continueTraining" type="button">Continue to training</button>
+      </div>
+    </section>
+
+    <section class="section-shell" id="training">
+      <div class="section-heading split-heading">
+        <div>
+          <p class="eyebrow">Education Module</p>
+          <h2>How to identify phishing indicators</h2>
+          <p>Short training content that can be triggered after a click or landing-page visit.</p>
+        </div>
+        <span class="badge">2 minutes</span>
+      </div>
+      <div class="cards-grid">
+        <article class="card"><span class="icon">🔗</span><h3>Check the link</h3><p>Hover over links and confirm the destination matches the organization before clicking.</p></article>
+        <article class="card"><span class="icon">⏱️</span><h3>Question urgency</h3><p>Be cautious of messages that pressure you to act immediately or threaten account loss.</p></article>
+        <article class="card"><span class="icon">✉️</span><h3>Verify sender details</h3><p>Review sender addresses carefully, especially small spelling changes or unusual domains.</p></article>
+        <article class="card"><span class="icon">🔐</span><h3>Never enter passwords</h3><p>Use trusted bookmarks or official portals instead of links from unexpected messages.</p></article>
+      </div>
+      <a class="button primary" href="#quiz">Start quiz</a>
+    </section>
+
+    <section class="section-shell" id="quiz">
+      <div class="section-heading">
+        <p class="eyebrow">Interactive Quiz</p>
+        <h2>Quick knowledge check</h2>
+        <p>Prototype quiz screen. The backend will calculate the score later; this version gives instant front-end feedback for demo purposes.</p>
+      </div>
+      <div class="panel quiz-card">
+        <h3>Which item is the strongest phishing warning sign?</h3>
+        <div class="quiz-options">
+          <button data-correct="false">A familiar company logo</button>
+          <button data-correct="true">A link that points to an unrelated domain</button>
+          <button data-correct="false">A short subject line</button>
+          <button data-correct="false">A message sent during business hours</button>
+        </div>
+        <p id="quizFeedback" class="quiz-feedback"></p>
+      </div>
+    </section>
+
+    <section class="section-shell" id="reports">
+      <div class="section-heading split-heading">
+        <div>
+          <p class="eyebrow">Admin Reports</p>
+          <h2>Campaign results overview</h2>
+          <p>Dashboard mockup for campaign engagement, training completion, and quiz results.</p>
+        </div>
+        <button class="button small" type="button" id="exportBtn">Export mock report</button>
+      </div>
+      <div class="report-table panel">
+        <table>
+          <thead><tr><th>Metric</th><th>Value</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Recipients</td><td>50</td><td>Imported</td></tr>
+            <tr><td>Emails sent</td><td>50</td><td>Complete</td></tr>
+            <tr><td>Unique clicks</td><td>18</td><td>Monitor</td></tr>
+            <tr><td>Training completed</td><td>15</td><td>Good</td></tr>
+            <tr><td>Average quiz score</td><td>78%</td><td>Needs reinforcement</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>VMS Phish-Guard front-end prototype · Created for Sprint 1 client review.</p>
+    <a href="#dashboard">Back to top</a>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">Saved</div>
+  <script src="assets/app.js"></script>
+</body>
+</html>
